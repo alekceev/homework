@@ -3,7 +3,7 @@ package items
 import (
 	"fmt"
 
-	"github.com/alekceev/homework/pkg/globals"
+	"homework/pkg/globals"
 )
 
 type Item struct {

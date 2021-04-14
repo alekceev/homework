@@ -1,4 +1,4 @@
-module github.com/alekceev/homework
+module homework
 
 go 1.14
 
