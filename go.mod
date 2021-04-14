@@ -1,4 +1,4 @@
-module github.com/alekceev/gb-go3
+module github.com/alekceev/homework
 
 go 1.14
 

@@ -8,9 +8,9 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/alekceev/gb-go3/pkg/globals"
-	"github.com/alekceev/gb-go3/pkg/items"
-	"github.com/alekceev/gb-go3/pkg/sqlite"
+	"github.com/alekceev/homework/pkg/globals"
+	"github.com/alekceev/homework/pkg/items"
+	"github.com/alekceev/homework/pkg/sqlite"
 
 	"github.com/gorilla/mux"
 )

@@ -3,7 +3,7 @@ package items
 import (
 	"fmt"
 
-	"github.com/alekceev/gb-go3/pkg/globals"
+	"github.com/alekceev/homework/pkg/globals"
 )
 
 type Item struct {
