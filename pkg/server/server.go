@@ -2,6 +2,7 @@ package server
 
 import (
 	"encoding/json"
+	"fmt"
 	"homework/pkg/interfaces"
 	"homework/pkg/models"
 	"log"
@@ -27,15 +28,12 @@ func (h *itemHandler) ItemsHandler(w http.ResponseWriter, r *http.Request) {
 		// Get items
 		items, err := h.repo.GetAll()
 		if err != nil {
-			panic(err)
+			log.Printf("Error GetAll: %v", err)
+			renderJSON(w, `{"error":"Error get items"}`)
+			return
 		}
-		// fmt.Printf("Items:\n\t%#v\n\n", items)
 
-		data, err := json.Marshal(items)
-		if err != nil {
-			panic(err)
-		}
-		renderJSON(w, data)
+		renderJSON(w, items)
 
 	case http.MethodPost:
 		// Create item
@@ -45,29 +43,30 @@ func (h *itemHandler) ItemsHandler(w http.ResponseWriter, r *http.Request) {
 		var item models.Item
 		err := decoder.Decode(&item)
 		if err != nil {
-			panic(err)
+			log.Printf("Error decode: %v", err)
+			renderJSON(w, `{"error":"Error"}`)
+			return
 		}
-		log.Println(item.Name)
 
 		err = h.repo.Save(&item)
 		if err != nil {
-			panic(err)
+			log.Printf("Error save item: %v", err)
+			renderJSON(w, `{"error":"Internal error"}`)
+			return
 		}
 
-		data, err := json.Marshal(item)
-		if err != nil {
-			panic(err)
-		}
-		renderJSON(w, data)
+		renderJSON(w, item)
 
 	default:
 		// Give an error message.
-		renderJSON(w, []byte(`{"error": 1}`))
+		log.Println("Not found")
+		renderJSON(w, `{"error": "Not found"}`)
 	}
 }
 
 func (h *itemHandler) ItemHandler(w http.ResponseWriter, r *http.Request) {
 	log.Printf("%s %s\n", r.Method, r.URL.Path)
+
 	vars := mux.Vars(r)
 	id, _ := strconv.ParseInt(vars["id"], 10, 64)
 
@@ -77,34 +76,55 @@ func (h *itemHandler) ItemHandler(w http.ResponseWriter, r *http.Request) {
 		item, err := h.repo.Get(id)
 		if err != nil {
 			log.Printf("Error get item: %d %v", id, err)
-			renderJSON(w, []byte(`{"error":"Not found"}`))
+			renderJSON(w, `{"error":"Not found"}`)
 			return
 		}
 
-		data, err := json.Marshal(item)
-		if err != nil {
-			panic(err)
-		}
-		renderJSON(w, data)
+		renderJSON(w, item)
 
 	case http.MethodDelete:
 		// Remove item
 		err := h.repo.Delete(id)
 		if err != nil {
-			panic(err)
+			log.Printf("Error delete item: %d %v", id, err)
+			renderJSON(w, `{"error":"Not found"}`)
+			return
 		}
-		renderJSON(w, []byte(`{"ok": 1}`))
+		renderJSON(w, `{"ok": "success"}`)
 
 	default:
 		// Give an error message.
-		renderJSON(w, []byte(`{"error": 1}`))
+		renderJSON(w, []byte(`{"error": "Not found"}`))
 	}
 }
 
-func renderJSON(w http.ResponseWriter, data []byte) {
-	log.Printf("response:\n\t%s\n", string(data))
+func renderJSON(w http.ResponseWriter, data interface{}) {
+	status := http.StatusOK
+
+	var (
+		resp []byte
+		err  error
+	)
+
+	if data == nil {
+		status = http.StatusNoContent
+	} else {
+
+		switch data := data.(type) {
+		case string:
+			resp = []byte(data)
+		case []byte:
+			resp = data
+		default:
+			resp, err = json.Marshal(data)
+			if err != nil {
+				status = http.StatusInternalServerError
+				resp = []byte(fmt.Sprintf(`{"error":"%v"}`, err))
+			}
+		}
+	}
 
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
-	w.WriteHeader(http.StatusOK)
-	w.Write(data)
+	w.WriteHeader(status)
+	w.Write(resp)
 }
