@@ -1,4 +1,4 @@
-package sqlite
+package database
 
 import (
 	"database/sql"
@@ -6,13 +6,27 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
-func SqliteInit() (db *sql.DB, err error) {
-	db, err = sql.Open("sqlite3", "file:/tmp/catalog.db?_mutex=full&_cslike=false")
+type DB struct {
+	db *sql.DB
+}
+
+func (d *DB) Open() error {
+	sqlite, err := sql.Open("sqlite3", "file:/tmp/catalog.db?_mutex=full&_cslike=false")
 	if err != nil {
-		return
+		return err
 	}
-	_, err = db.Exec(init_query())
-	return
+	_, err = sqlite.Exec(init_query())
+
+	d.db = sqlite
+	return nil
+}
+
+func (d *DB) Close() error {
+	return d.db.Close()
+}
+
+func (d *DB) Dbh() *sql.DB {
+	return d.db
 }
 
 func init_query() string {
