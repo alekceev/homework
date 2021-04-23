@@ -1,0 +1,9 @@
+{{ define "title" }}Items{{ end }}
+
+{{ define "content" }}
+  {{range . }}
+    <h1>{{ .Name }}</h1>
+    <p>{{ .Description }}</p>
+    <p>${{ .Price }}</p>
+  {{end}}
+{{ end }}

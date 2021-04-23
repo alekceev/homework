@@ -1,10 +1,10 @@
-package server
+package controller
 
 import (
 	"encoding/json"
-	"fmt"
 	"homework/pkg/interfaces"
 	"homework/pkg/models"
+	"homework/pkg/renderer"
 	"log"
 	"net/http"
 	"strconv"
@@ -23,17 +23,23 @@ func NewItemHandler(repo interfaces.Repository) *itemHandler {
 func (h *itemHandler) ItemsHandler(w http.ResponseWriter, r *http.Request) {
 	log.Printf("%s %s\n", r.Method, r.URL.Path)
 
+	renderer := renderer.NewRender(r)
+	templates := []string{
+		"./pkg/templates/layout.tmpl",
+		"./pkg/templates/items/items.tmpl",
+	}
+
 	switch r.Method {
 	case http.MethodGet:
 		// Get items
 		items, err := h.repo.GetAll()
 		if err != nil {
 			log.Printf("Error GetAll: %v", err)
-			renderJSON(w, `{"error":"Error get items"}`)
+			renderer.Render(w, `{"error":"Error get items"}`, templates, http.StatusOK)
 			return
 		}
 
-		renderJSON(w, items)
+		renderer.Render(w, items, templates, http.StatusOK)
 
 	case http.MethodPost:
 		// Create item
@@ -44,28 +50,34 @@ func (h *itemHandler) ItemsHandler(w http.ResponseWriter, r *http.Request) {
 		err := decoder.Decode(&item)
 		if err != nil {
 			log.Printf("Error decode: %v", err)
-			renderJSON(w, `{"error":"Error"}`)
+			renderer.Render(w, `{"error":"Error"}`, templates, http.StatusOK)
 			return
 		}
 
 		err = h.repo.Save(&item)
 		if err != nil {
 			log.Printf("Error save item: %v", err)
-			renderJSON(w, `{"error":"Internal error"}`)
+			renderer.Render(w, `{"error":"Internal error"}`, templates, http.StatusOK)
 			return
 		}
 
-		renderJSON(w, item)
+		renderer.Render(w, item, templates, http.StatusOK)
 
 	default:
 		// Give an error message.
 		log.Println("Not found")
-		renderJSON(w, `{"error": "Not found"}`)
+		renderer.Render(w, `{"error": "Not found"}`, templates, http.StatusOK)
 	}
 }
 
 func (h *itemHandler) ItemHandler(w http.ResponseWriter, r *http.Request) {
 	log.Printf("%s %s\n", r.Method, r.URL.Path)
+
+	renderer := renderer.NewRender(r)
+	templates := []string{
+		"./pkg/templates/layout.tmpl",
+		"./pkg/templates/items/item.tmpl",
+	}
 
 	vars := mux.Vars(r)
 	id, _ := strconv.ParseInt(vars["id"], 10, 64)
@@ -76,55 +88,24 @@ func (h *itemHandler) ItemHandler(w http.ResponseWriter, r *http.Request) {
 		item, err := h.repo.Get(id)
 		if err != nil {
 			log.Printf("Error get item: %d %v", id, err)
-			renderJSON(w, `{"error":"Not found"}`)
+			renderer.Render(w, `{"error":"Not found"}`, templates, http.StatusOK)
 			return
 		}
 
-		renderJSON(w, item)
+		renderer.Render(w, item, templates, http.StatusOK)
 
 	case http.MethodDelete:
 		// Remove item
 		err := h.repo.Delete(id)
 		if err != nil {
 			log.Printf("Error delete item: %d %v", id, err)
-			renderJSON(w, `{"error":"Not found"}`)
+			renderer.Render(w, `{"error":"Not found"}`, templates, http.StatusOK)
 			return
 		}
-		renderJSON(w, `{"ok": "success"}`)
+		renderer.Render(w, `{"ok": "success"}`, templates, http.StatusOK)
 
 	default:
 		// Give an error message.
-		renderJSON(w, []byte(`{"error": "Not found"}`))
+		renderer.Render(w, []byte(`{"error": "Not found"}`), templates, http.StatusOK)
 	}
-}
-
-func renderJSON(w http.ResponseWriter, data interface{}) {
-	status := http.StatusOK
-
-	var (
-		resp []byte
-		err  error
-	)
-
-	if data == nil {
-		status = http.StatusNoContent
-	} else {
-
-		switch data := data.(type) {
-		case string:
-			resp = []byte(data)
-		case []byte:
-			resp = data
-		default:
-			resp, err = json.Marshal(data)
-			if err != nil {
-				status = http.StatusInternalServerError
-				resp = []byte(fmt.Sprintf(`{"error":"%v"}`, err))
-			}
-		}
-	}
-
-	w.Header().Set("Content-Type", "application/json; charset=utf-8")
-	w.WriteHeader(status)
-	w.Write(resp)
 }
