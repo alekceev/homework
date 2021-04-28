@@ -24,7 +24,7 @@ func (app *App) IndexHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprint(w, `
 			Create item
-			curl -sL -XPOST http://localhost:8081/items -d '{"name":"Cake", "description":"Delicious Cake", "price": 5}'
+			curl -sL -XPOST http://localhost:8081/items -d '{"name":"Intel Core I3", "description":"Intel Cole i3", "article":"i3-e100", "category":"Процессоры", "price": 5}'
 	
 			Get All items
 			curl -sL http://localhost:8081/items

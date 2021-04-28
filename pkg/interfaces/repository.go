@@ -7,4 +7,6 @@ type Repository interface {
 	Get(id int64) (*models.Item, error)
 	Save(item *models.Item) error
 	Delete(id int64) error
+	FindByName(item *models.Item) (*models.Item, error)
+	Update(item *models.Item) error
 }
