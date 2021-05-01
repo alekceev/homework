@@ -1,7 +1,6 @@
 package repositories
 
 import (
-	"database/sql"
 	"fmt"
 	"homework/pkg/interfaces"
 	"homework/pkg/models"
@@ -9,17 +8,24 @@ import (
 )
 
 type ItemRepository struct {
-	db *sql.DB
+	db interfaces.DB
 }
+
+// todo***
+// ItemRepositoryRaw => SQL. .Raw().Query("SELECT...")
+// ItemRepository: Find() => repoRaw.Find()
+// ItemRepository: Save() => repoRaw.Update() / repoRaw.Insert()
+// SOFT_DELETE: created_at, updated_at... deleted_at
+// ItemRepository: Delete() => repoRaw.Update(..deleted_at=...) / repoRaw.Delete()
 
 var _ interfaces.Repository = &ItemRepository{}
 
-func NewItemRepository(db *sql.DB) *ItemRepository {
+func NewItemRepository(db interfaces.DB) *ItemRepository {
 	return &ItemRepository{db: db}
 }
 
 func (i *ItemRepository) GetAll() (models.Items, error) {
-	rows, err := i.db.Query("select * from items")
+	rows, err := i.db.Raw().Query("select * from items")
 	if err != nil {
 		return nil, err
 	}
@@ -40,7 +46,7 @@ func (i *ItemRepository) GetAll() (models.Items, error) {
 }
 
 func (i *ItemRepository) Get(id int64) (*models.Item, error) {
-	row := i.db.QueryRow("select * from items where id = ?", id)
+	row := i.db.Raw().QueryRow("select * from items where id = ?", id)
 	item := &models.Item{}
 	err := row.Scan(&item.Id, &item.Name, &item.Description, &item.Article, &item.Category, &item.Price, &item.SalePrice)
 	if err != nil {
@@ -54,7 +60,7 @@ func (i *ItemRepository) Save(item *models.Item) error {
 	if salePrice <= 0 {
 		salePrice = item.Price
 	}
-	res, err := i.db.Exec("insert into items(name, description, article, category, price, sale_price) values (?, ?, ?, ?, ?, ?)",
+	res, err := i.db.Raw().Exec("insert into items(name, description, article, category, price, sale_price) values (?, ?, ?, ?, ?, ?)",
 		item.Name, item.Description, item.Article, item.Category, item.Price, salePrice)
 	if err != nil {
 		return err
@@ -71,7 +77,7 @@ func (i *ItemRepository) Save(item *models.Item) error {
 }
 
 func (i *ItemRepository) Delete(id int64) error {
-	_, err := i.db.Exec("delete from items where id = ?", id)
+	_, err := i.db.Raw().Exec("delete from items where id = ?", id)
 	if err != nil {
 		return err
 	}
@@ -79,7 +85,7 @@ func (i *ItemRepository) Delete(id int64) error {
 }
 
 func (i *ItemRepository) FindByName(item *models.Item) (*models.Item, error) {
-	row := i.db.QueryRow("select * from items where name = ?", item.Name)
+	row := i.db.Raw().QueryRow("select * from items where name = ?", item.Name)
 	found_item := &models.Item{}
 	err := row.Scan(&found_item.Id, &found_item.Name, &found_item.Description, &found_item.Article, &found_item.Category, &found_item.Price, &found_item.SalePrice)
 	if err != nil {
@@ -99,7 +105,7 @@ func (i *ItemRepository) Update(item *models.Item) error {
 		salePrice = item.Price
 	}
 
-	res, err := i.db.Exec("update items set name = ?, description = ?, article = ?, category = ?, price = ?, sale_price = ? where id = ?",
+	res, err := i.db.Raw().Exec("update items set name = ?, description = ?, article = ?, category = ?, price = ?, sale_price = ? where id = ?",
 		item.Name, item.Description, item.Article, item.Category, item.Price, salePrice, item.Id)
 	if err != nil {
 		return err

@@ -1,9 +1,7 @@
 package main
 
 import (
-	"fmt"
 	"log"
-	"net/http"
 	"os"
 
 	"homework/pkg/app"
@@ -16,8 +14,9 @@ func main() {
 
 	// todo: move to flags
 	var dbHost = "file:/tmp/catalog.db?_mutex=full&_cslike=false"
-
+	var host = "localhost"
 	var port string
+
 	flag.StringVar(&port, "port", "8081", "Server port")
 	flag.Parse()
 
@@ -31,10 +30,10 @@ func main() {
 	app := app.NewApp()
 	app.DB = db
 
-	app.InitRouters()
+	if err := app.Start(host, port); err != nil {
+		panic(err)
 
-	http.HandleFunc("/", app.Router.ServeHTTP)
+		// gracefull shutown
+	}
 
-	fmt.Println("Server is listening http://localhost:" + port + "...")
-	http.ListenAndServe(":"+port, nil)
 }
