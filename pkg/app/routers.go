@@ -9,7 +9,7 @@ import (
 
 func (app *App) InitRouters() {
 
-	itemRepo := repositories.NewItemRepository(app.DB.Dbh())
+	itemRepo := repositories.NewItemRepository(app.DB.Raw())
 
 	// Item Handler
 	item := controller.NewItemHandler(itemRepo)

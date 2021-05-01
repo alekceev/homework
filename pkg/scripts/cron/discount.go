@@ -36,7 +36,8 @@ func main() {
 	}
 
 	db := &database.DB{}
-	if err := db.Open(); err != nil {
+	// TODO: doesn't work
+	if err := db.Open(""); err != nil {
 		log.Panicf("Db error: %v", err)
 	}
 	defer db.Close()

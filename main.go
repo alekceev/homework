@@ -14,17 +14,23 @@ import (
 
 func main() {
 
+	// todo: move to flags
+	var dbHost = "file:/tmp/catalog.db?_mutex=full&_cslike=false"
+
 	var port string
 	flag.StringVar(&port, "port", "8081", "Server port")
 	flag.Parse()
 
-	app := app.NewApp()
-	app.DB = &database.DB{}
-	if err := app.DB.Open(); err != nil {
+	db, err := database.Connect(dbHost)
+	if err != nil {
 		log.Fatalf("Db error: %v", err)
 		os.Exit(1)
 	}
-	defer app.DB.Close()
+	defer db.Close()
+
+	app := app.NewApp()
+	app.DB = db
+
 	app.InitRouters()
 
 	http.HandleFunc("/", app.Router.ServeHTTP)

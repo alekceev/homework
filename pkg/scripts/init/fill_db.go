@@ -11,12 +11,13 @@ import (
 func main() {
 
 	db := &database.DB{}
-	if err := db.Open(); err != nil {
+	// todo: DOESNT work
+	if err := db.Open(""); err != nil {
 		log.Panicf("Db error: %v", err)
 	}
 	defer db.Close()
 
-	itemRepo := repositories.NewItemRepository(db.Dbh())
+	itemRepo := repositories.NewItemRepository(db.Raw())
 
 	data := []byte(`[
 		{"name":"Intel Core i3-8100", "description":"Процессор Intel", "article":"i3-8100", "category":"Процессоры", "price":7890.00},

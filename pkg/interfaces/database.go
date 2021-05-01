@@ -3,7 +3,7 @@ package interfaces
 import "database/sql"
 
 type DB interface {
-	Open() error
+	Open(host string) error
 	Close() error
-	Dbh() *sql.DB
+	Raw() *sql.DB
 }
