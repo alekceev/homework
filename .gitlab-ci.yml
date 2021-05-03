@@ -4,6 +4,7 @@ image: golang:latest
 variables:
   # Please edit to your GitLab project
   REPO_NAME: gitlab.com/alekceev/gb-go_arch
+  REGISTRY_REPO: $CI_REGISTRY/alekceev/gb-go_arch
 
 # The problem is that to be able to use go get, one needs to put
 # the repository in the $GOPATH. So for example if your gitlab domain
@@ -19,6 +20,7 @@ before_script:
 stages:
   - test
   - build
+  - release
   - deploy
 
 format:
@@ -31,7 +33,19 @@ format:
 compile:
   stage: build
   script:
-    - go build -race -ldflags "-extldflags '-static'" -o $CI_PROJECT_DIR/mybinary
+    - go build -race -ldflags "-extldflags '-static'" -o $CI_PROJECT_DIR/cmd/app
   artifacts:
     paths:
-      - mybinary
+      - cmd
+
+build-image:
+  stage: release
+  image: docker:19.03.12
+  dependencies:
+    - build
+  services:
+    - docker:19.03.12-dind
+  script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    - docker build -t $REGISTRY_REPO:latest -f ./build/Dockerfile .
+    - docker push $REGISTRY_REPO:latest
