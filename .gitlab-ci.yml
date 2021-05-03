@@ -42,7 +42,7 @@ build-image:
   stage: release
   image: docker:19.03.12
   dependencies:
-    - build
+    - compile
   services:
     - docker:19.03.12-dind
   script:
