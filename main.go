@@ -12,12 +12,11 @@ import (
 
 func main() {
 
-	// todo: move to flags
-	var dbHost = "file:/tmp/catalog.db?_mutex=full&_cslike=false"
-	var host = "localhost"
-	var port string
+	var host, port, dbHost string
 
+	flag.StringVar(&host, "host", "localhost", "Server host")
 	flag.StringVar(&port, "port", "8081", "Server port")
+	flag.StringVar(&dbHost, "dbHost", "file:/tmp/catalog.db?_mutex=full&_cslike=false", "Server dbHost")
 	flag.Parse()
 
 	db, err := database.Connect(dbHost)

@@ -1,65 +1,27 @@
 package categories
 
-import (
-	"fmt"
-)
-
 type Categories struct {
-	ids      map[int]*Category
-	nameToId map[string]int
+	Cats []*Category
 }
 
 func NewCategories() *Categories {
 	return &Categories{
-		ids:      make(map[int]*Category),
-		nameToId: make(map[string]int),
+		Cats: make([]*Category, 0),
 	}
 }
 
-func (c *Categories) AddCategory(id int, name string, slug string, parent_name string) {
-	if _, found := c.ids[id]; found {
-		fmt.Printf("Category exists %#v\n", found)
-		return
-	}
-
-	category := NewCategory(id, name, slug)
-
-	parentId, ok := c.nameToId[parent_name]
-	if ok {
-		parent := c.ids[parentId]
-		parent.Append(category)
-	}
-
-	c.ids[category.Id] = category
-	c.nameToId[category.Name] = category.Id
+func (c *Categories) Add(cat *Category) *Categories {
+	c.Cats = append(c.Cats, cat)
+	return c
 }
 
-func (c *Categories) GetCategory(id int) *Category {
-	return c.ids[id]
-}
-
-func (c *Categories) PrintTree(id int) {
-	cat := c.GetCategory(id)
-	if cat == nil {
-		return
+func (c *Categories) Names() []string {
+	names := make([]string, 0)
+	if len(c.Cats) == 0 {
+		return names
 	}
-
-	// ограничение на уровень вложенности
-	if cat.level >= 5 {
-		return
+	for _, cat := range c.Cats {
+		names = append(names, cat.Name)
 	}
-
-	if len(cat.childrens) == 0 {
-		return
-	}
-
-	tabs := ""
-	for i := 1; i < cat.level; i++ {
-		tabs += "\t"
-	}
-
-	for _, child := range cat.childrens {
-		fmt.Printf("%s%s(%d)\n", tabs, child.Name, child.Id)
-		c.PrintTree(child.Id)
-	}
+	return names
 }

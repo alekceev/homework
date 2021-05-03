@@ -6,28 +6,42 @@ import (
 	"strings"
 )
 
+type Cats struct {
+	nameToCat map[string]*categories.Category
+	cats      []*categories.Category
+}
+
+func (c *Cats) AddCategory(id int, name string, slug string, parentName string) {
+	cat := categories.NewCategory(id, name, slug)
+
+	parent, ok := c.nameToCat[parentName]
+	if ok {
+		parent.Append(cat)
+	}
+	c.cats = append(c.cats, cat)
+	c.nameToCat[name] = cat
+}
+
 func main() {
 
-	categories := categories.NewCategories()
-	categories.AddCategory(1, "Главная", "", "")
-	categories.AddCategory(2, "Процессоры", "", "Главная")
-	categories.AddCategory(3, "Мат.Платы", "", "Главная")
-	categories.AddCategory(4, "Память", "", "Главная")
-	categories.AddCategory(5, "Intel", "", "Процессоры")
-	categories.AddCategory(6, "Amd", "", "Процессоры")
-	categories.AddCategory(7, "DDR3", "", "Память")
-	categories.AddCategory(8, "DDR4", "", "Память")
-	categories.AddCategory(9, "Core I3", "", "Intel")
-	categories.AddCategory(10, "Core I5", "", "Intel")
+	// Список категорий для примера
+	c := &Cats{
+		nameToCat: make(map[string]*categories.Category),
+	}
+	c.AddCategory(1, "Главная", "", "")
+	c.AddCategory(2, "Процессоры", "", "Главная")
+	c.AddCategory(3, "Мат.Платы", "", "Главная")
+	c.AddCategory(4, "Память", "", "Главная")
+	c.AddCategory(5, "Intel", "", "Процессоры")
+	c.AddCategory(6, "Amd", "", "Процессоры")
+	c.AddCategory(7, "DDR3", "", "Память")
+	c.AddCategory(8, "DDR4", "", "Память")
+	c.AddCategory(9, "Core I3", "", "Intel")
+	c.AddCategory(10, "Core I5", "", "Intel")
 
-	cat := categories.GetCategory(10)
+	cat, _ := c.nameToCat["Core I5"]
+
 	fmt.Printf("\n\nItem: %s\nParent: %s(%d)\n", cat.Name, cat.GetParent().Name, cat.GetParent().Id)
 	fmt.Printf("Root: %s\n", cat.GetRoot().Name)
-	fmt.Println("Breadcrumbs: " + strings.Join(cat.Bredcrumbs(), "/"))
-
-	fmt.Println("\n\nMenu")
-	categories.PrintTree(1)
-	fmt.Println("\n\nSubmenu")
-	categories.PrintTree(2)
-
+	fmt.Println("Breadcrumbs: " + strings.Join(cat.Bredcrumbs().Names(), "/"))
 }

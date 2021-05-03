@@ -9,7 +9,6 @@ type Category struct {
 	ParentId  int
 	parent    *Category
 	childrens []*Category
-	hasChild  map[int]struct{}
 	level     int
 }
 
@@ -19,18 +18,13 @@ func NewCategory(id int, name string, slug string) *Category {
 		Name:      name,
 		Slug:      slug,
 		childrens: make([]*Category, 0),
-		// hasChild   make(map[int]struct{}, 0), // Не понял, почему ругается
-		level: 1,
+		level:     1,
 	}
 }
 
 // Добавляем категорю к родителю, а так же назначаем категории родителя
 func (c *Category) Append(category *Category) {
 	c.childrens = append(c.childrens, category)
-	if c.hasChild == nil {
-		c.hasChild = make(map[int]struct{}, 0)
-	}
-	c.hasChild[category.Id] = struct{}{}
 	category.ParentId = c.Id
 	category.parent = c
 	category.level = c.level + 1
@@ -54,14 +48,16 @@ func (c *Category) GetRoot() *Category {
 	}
 }
 
-func (c *Category) Bredcrumbs() []string {
+func (c *Category) Bredcrumbs() *Categories {
 
-	breadcrumbs := make([]string, 0)
+	breadcrumbs := NewCategories()
 	if c.parent != nil {
-		breadcrumbs = append(breadcrumbs, c.parent.Bredcrumbs()...)
+		for _, cat := range c.parent.Bredcrumbs().Cats {
+			breadcrumbs.Add(cat)
+		}
 	}
 
-	breadcrumbs = append(breadcrumbs, c.Name)
+	breadcrumbs.Add(c)
 
 	return breadcrumbs
 }
