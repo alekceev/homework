@@ -1,9 +1,7 @@
 package main
 
 import (
-	"fmt"
 	"log"
-	"net/http"
 	"os"
 
 	"homework/pkg/app"
@@ -14,21 +12,27 @@ import (
 
 func main() {
 
-	var port string
+	var host, port, dbHost string
+
+	flag.StringVar(&host, "host", "localhost", "Server host")
 	flag.StringVar(&port, "port", "8081", "Server port")
+	flag.StringVar(&dbHost, "dbHost", "file:/tmp/catalog.db?_mutex=full&_cslike=false", "Server dbHost")
 	flag.Parse()
 
-	app := app.NewApp()
-	app.DB = &database.DB{}
-	if err := app.DB.Open(); err != nil {
+	db, err := database.Connect(dbHost)
+	if err != nil {
 		log.Fatalf("Db error: %v", err)
 		os.Exit(1)
 	}
-	defer app.DB.Close()
-	app.InitRouters()
+	defer db.Close()
 
-	http.HandleFunc("/", app.Router.ServeHTTP)
+	app := app.NewApp()
+	app.DB = db
 
-	fmt.Println("Server is listening http://localhost:" + port + "...")
-	http.ListenAndServe(":"+port, nil)
+	if err := app.Start(host, port); err != nil {
+		panic(err)
+
+		// gracefull shutown
+	}
+
 }

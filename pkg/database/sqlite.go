@@ -10,8 +10,18 @@ type DB struct {
 	db *sql.DB
 }
 
-func (d *DB) Open() error {
-	sqlite, err := sql.Open("sqlite3", "file:/tmp/catalog.db?_mutex=full&_cslike=false")
+func Connect(host string) (*DB, error) {
+	db := &DB{}
+	err := db.Open(host)
+	if err != nil {
+		return nil, err
+	}
+
+	return db, nil
+}
+
+func (d *DB) Open(host string) error {
+	sqlite, err := sql.Open("sqlite3", host)
 	if err != nil {
 		return err
 	}
@@ -25,7 +35,7 @@ func (d *DB) Close() error {
 	return d.db.Close()
 }
 
-func (d *DB) Dbh() *sql.DB {
+func (d *DB) Raw() *sql.DB {
 	return d.db
 }
 

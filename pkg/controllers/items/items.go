@@ -1,7 +1,8 @@
-package controller
+package items
 
 import (
 	"encoding/json"
+	"homework/pkg/controllers/routes"
 	"homework/pkg/interfaces"
 	"homework/pkg/models"
 	"homework/pkg/renderer"
@@ -12,15 +13,15 @@ import (
 	"github.com/gorilla/mux"
 )
 
-type itemHandler struct {
+type ItemsController struct {
 	repo interfaces.Repository
 }
 
-func NewItemHandler(repo interfaces.Repository) *itemHandler {
-	return &itemHandler{repo: repo}
+func NewItemsController(repo interfaces.Repository) *ItemsController {
+	return &ItemsController{repo: repo}
 }
 
-func (h *itemHandler) ItemsHandler(w http.ResponseWriter, r *http.Request) {
+func (h *ItemsController) GetAll(w http.ResponseWriter, r *http.Request) {
 	log.Printf("%s %s\n", r.Method, r.URL.Path)
 
 	renderer := renderer.NewRender(r)
@@ -70,7 +71,7 @@ func (h *itemHandler) ItemsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (h *itemHandler) ItemHandler(w http.ResponseWriter, r *http.Request) {
+func (h *ItemsController) Get(w http.ResponseWriter, r *http.Request) {
 	log.Printf("%s %s\n", r.Method, r.URL.Path)
 
 	renderer := renderer.NewRender(r)
@@ -107,5 +108,12 @@ func (h *itemHandler) ItemHandler(w http.ResponseWriter, r *http.Request) {
 	default:
 		// Give an error message.
 		renderer.Render(w, []byte(`{"error": "Not found"}`), templates, http.StatusOK)
+	}
+}
+
+func (h *ItemsController) Routes() []routes.Route {
+	return []routes.Route{
+		{Route: "/items", Handler: h.GetAll, Methods: []string{http.MethodGet, http.MethodPost}},
+		{Route: "/items/{id:[0-9]+}", Handler: h.Get, Methods: []string{http.MethodGet, http.MethodDelete}},
 	}
 }
