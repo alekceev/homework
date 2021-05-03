@@ -2,17 +2,17 @@ package main
 
 import (
 	"fmt"
-	"homework/pkg/categories"
+	"homework/pkg/models"
 	"strings"
 )
 
 type Cats struct {
-	nameToCat map[string]*categories.Category
-	cats      []*categories.Category
+	nameToCat map[string]*models.Category
+	cats      []*models.Category
 }
 
 func (c *Cats) AddCategory(id int, name string, slug string, parentName string) {
-	cat := categories.NewCategory(id, name, slug)
+	cat := models.NewCategory(id, name, slug)
 
 	parent, ok := c.nameToCat[parentName]
 	if ok {
@@ -26,7 +26,7 @@ func main() {
 
 	// Список категорий для примера
 	c := &Cats{
-		nameToCat: make(map[string]*categories.Category),
+		nameToCat: make(map[string]*models.Category),
 	}
 	c.AddCategory(1, "Главная", "", "")
 	c.AddCategory(2, "Процессоры", "", "Главная")
