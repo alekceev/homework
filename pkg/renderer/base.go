@@ -24,7 +24,7 @@ func NewRender(r *http.Request) *Render {
 		case "text/html":
 			format = "html"
 		default:
-			format = "html"
+			format = "json"
 		}
 	}
 
@@ -36,7 +36,7 @@ func NewRender(r *http.Request) *Render {
 	case "html":
 		renderer = NewHtmlRenderer()
 	default:
-		renderer = NewHtmlRenderer()
+		renderer = NewJsonRenderer()
 	}
 
 	log.Printf("%s %#v\n", format, renderer)

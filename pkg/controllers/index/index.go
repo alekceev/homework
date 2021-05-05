@@ -16,7 +16,7 @@ func (h *IndexController) Index(w http.ResponseWriter, r *http.Request) {
 	// todo: render in json (or Renders)
 	fmt.Fprint(w, `
 			Create item
-			curl -sL -XPOST http://localhost:8081/items -d '{"name":"Intel Core I3", "description":"Intel Cole i3", "article":"i3-e100", "category":"Процессоры", "price": 5}'
+			curl -sL -XPOST http://localhost:8081/items -d '{"name":"Intel Core I3", "description":"Intel Cole i3", "number":"i3-e100", "category":"Процессоры", "price": 5}'
 	
 			Get All items
 			curl -sL http://localhost:8081/items
