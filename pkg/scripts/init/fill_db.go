@@ -10,7 +10,7 @@ import (
 
 func main() {
 	app := app.NewApp()
-	defer app.Close()
+	defer app.Stop()
 
 	itemRepo := repositories.NewItemRepository(app.DB)
 

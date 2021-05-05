@@ -1,6 +1,7 @@
 package discounter
 
 import (
+	"context"
 	"fmt"
 	"homework/pkg/interfaces"
 	"log"
@@ -27,7 +28,7 @@ func NewDiscountService(repo interfaces.Repository, url string) *DiscountService
 	}
 }
 
-func (s *DiscountService) Start() error {
+func (s *DiscountService) Start(ctx context.Context) error {
 	for range time.Tick(1 * time.Minute) {
 		now := time.Now()
 
@@ -41,7 +42,7 @@ func (s *DiscountService) Start() error {
 	return nil
 }
 
-func (s *DiscountService) Stop() error {
+func (s *DiscountService) Stop(ctx context.Context) error {
 	log.Println("Stoping discount service...")
 	return nil
 }

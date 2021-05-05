@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"homework/pkg/interfaces"
 	"log"
 	"net/http"
@@ -18,12 +19,13 @@ func NewWebServer(server *http.Server) *WebServer {
 	}
 }
 
-func (s *WebServer) Start() error {
+func (s *WebServer) Start(ctx context.Context) error {
 	log.Printf("Server is listening http://%s ...\n", s.server.Addr)
 	return s.server.ListenAndServe()
 }
 
-func (s *WebServer) Stop() error {
+func (s *WebServer) Stop(ctx context.Context) error {
+	s.server.Shutdown(ctx)
 	log.Println("Stoping web server...")
 	return nil
 }

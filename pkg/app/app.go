@@ -1,6 +1,7 @@
 package app
 
 import (
+	"context"
 	"homework/pkg/controllers/index"
 	"homework/pkg/controllers/items"
 	"homework/pkg/database"
@@ -11,7 +12,8 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"sync"
+	"os/signal"
+	"time"
 
 	"github.com/gorilla/mux"
 )
@@ -21,6 +23,7 @@ type App struct {
 	DB       interfaces.DB
 	Config   *Config
 	Services []interfaces.Service
+	ctx      context.Context
 }
 
 func NewApp() *App {
@@ -28,6 +31,7 @@ func NewApp() *App {
 		Config:   ParseConfig(),
 		Router:   mux.NewRouter(),
 		Services: make([]interfaces.Service, 0),
+		ctx:      context.Background(),
 	}
 
 	// init DB
@@ -41,10 +45,16 @@ func NewApp() *App {
 	return app
 }
 
-func (app *App) Close() {
+func (app *App) AddService(service interfaces.Service) {
+	app.Services = append(app.Services, service)
+}
+
+func (app *App) Stop() {
+	ctx, cancel := context.WithTimeout(app.ctx, 15*time.Second)
+	defer cancel()
 
 	for _, service := range app.Services {
-		service.Stop()
+		service.Stop(ctx)
 	}
 
 	app.DB.Close()
@@ -60,13 +70,6 @@ func (app *App) Start() error {
 	// Repositories
 	itemsRepo := repositories.NewItemRepository(app.DB)
 
-	// Item Controller
-	itemsCtrl := items.NewItemsController(itemsRepo)
-
-	for _, route := range itemsCtrl.Routes() {
-		app.Router.HandleFunc(route.Route, route.Handler).Methods(route.Methods...)
-	}
-
 	// Index Controller
 	indexCtr := index.NewIndexController()
 
@@ -74,11 +77,18 @@ func (app *App) Start() error {
 		app.Router.HandleFunc(route.Route, route.Handler).Methods(route.Methods...)
 	}
 
+	// Item Controller
+	itemsCtrl := items.NewItemsController(itemsRepo)
+
+	for _, route := range itemsCtrl.Routes() {
+		app.Router.HandleFunc(route.Route, route.Handler).Methods(route.Methods...)
+	}
+
 	http.Handle("/", app.Router)
 	http.Handle("/static/", http.StripPrefix("/static", http.FileServer(http.Dir("./web"))))
 
 	// web server
-	app.Services = append(app.Services,
+	app.AddService(
 		server.NewWebServer(
 			&http.Server{
 				Addr: app.Config.Host + ":" + app.Config.Port,
@@ -86,20 +96,26 @@ func (app *App) Start() error {
 		),
 	)
 
-	//over services
-	app.Services = append(app.Services, discounter.NewDiscountService(itemsRepo, app.Config.DiscountUrl))
+	//other services
+	app.AddService(discounter.NewDiscountService(itemsRepo, app.Config.DiscountUrl))
 
 	// start Services
 	app.StartServices()
+
+	// Setting up signal capturing
+	stop := make(chan os.Signal, 1)
+	signal.Notify(stop, os.Interrupt)
+
+	// Waiting for SIGINT (pkill -2)
+	<-stop
+
+	app.Stop()
 
 	return nil
 }
 
 func (app *App) StartServices() {
-	var wg sync.WaitGroup
 	for _, service := range app.Services {
-		wg.Add(1)
-		go service.Start()
+		go service.Start(app.ctx)
 	}
-	wg.Wait()
 }
