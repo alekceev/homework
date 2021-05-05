@@ -1,103 +1,18 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
 	"os"
-	"strconv"
 
-	"homework/pkg/globals"
-	"homework/pkg/items"
+	"homework/pkg/repositories"
+	"homework/pkg/server"
 	"homework/pkg/sqlite"
 
 	"github.com/gorilla/mux"
+	"github.com/namsral/flag"
 )
-
-const port = "8081"
-
-func itemsHandler(w http.ResponseWriter, r *http.Request) {
-	log.Printf("%s %s\n", r.Method, r.URL.Path)
-
-	switch r.Method {
-	case http.MethodGet:
-		// Get items
-		items, err := items.GetAll()
-		if err != nil {
-			panic(err)
-		}
-		// fmt.Printf("Items:\n\t%#v\n\n", items)
-
-		data, err := json.Marshal(items)
-		if err != nil {
-			panic(err)
-		}
-		renderJSON(w, data)
-
-	case http.MethodPost:
-		// Create item
-		log.Println("create item")
-
-		decoder := json.NewDecoder(r.Body)
-		var item items.Item
-		err := decoder.Decode(&item)
-		if err != nil {
-			panic(err)
-		}
-		log.Println(item.Name)
-
-		item, err = items.CreateItem(item)
-		if err != nil {
-			panic(err)
-		}
-
-		data, err := json.Marshal(item)
-		if err != nil {
-			panic(err)
-		}
-		renderJSON(w, data)
-
-	default:
-		// Give an error message.
-		renderJSON(w, []byte(`{"error": 1}`))
-	}
-}
-
-func itemHandler(w http.ResponseWriter, r *http.Request) {
-	log.Printf("%s %s\n", r.Method, r.URL.Path)
-	vars := mux.Vars(r)
-	id, _ := strconv.ParseInt(vars["id"], 10, 64)
-
-	switch r.Method {
-	case http.MethodGet:
-		// Get item
-		item, err := items.GetItem(id)
-		if err != nil {
-			log.Printf("Error get item: %d %v", id, err)
-			renderJSON(w, []byte(`{"error":"Not found"}`))
-			return
-		}
-
-		data, err := json.Marshal(item)
-		if err != nil {
-			panic(err)
-		}
-		renderJSON(w, data)
-
-	case http.MethodDelete:
-		// Remove item
-		err := items.DeleteItem(id)
-		if err != nil {
-			panic(err)
-		}
-		renderJSON(w, []byte(`{"ok": 1}`))
-
-	default:
-		// Give an error message.
-		renderJSON(w, []byte(`{"error": 1}`))
-	}
-}
 
 func indexHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, `
@@ -117,34 +32,34 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 
 func main() {
 
+	var port string
+	flag.StringVar(&port, "port", "8081", "Server port")
+	flag.Parse()
+
 	// init Db
-	var err error
-	globals.Db, err = sqlite.SqliteInit()
+	db, err := sqlite.SqliteInit()
 	if err != nil {
 		log.Fatalf("Db error: %v", err)
 		os.Exit(1)
 	}
 	defer func() {
-		err := globals.Db.Close()
+		err := db.Close()
 		if err != nil {
 			log.Fatalf("Db close error: %v", err)
 		}
 	}()
 
+	itemRepo := repositories.NewItemRepository(db)
+
+	// Item Handler
+	item := server.NewItemHandler(itemRepo)
+
 	router := mux.NewRouter()
-	router.HandleFunc("/items", itemsHandler).Methods(http.MethodGet, http.MethodPost)
-	router.HandleFunc("/items/{id:[0-9]+}", itemHandler).Methods(http.MethodGet, http.MethodDelete)
+	router.HandleFunc("/items", item.ItemsHandler).Methods(http.MethodGet, http.MethodPost)
+	router.HandleFunc("/items/{id:[0-9]+}", item.ItemHandler).Methods(http.MethodGet, http.MethodDelete)
 	router.HandleFunc("/", indexHandler)
 	http.Handle("/", router)
 
 	fmt.Println("Server is listening http://localhost:" + port + "...")
 	http.ListenAndServe(":"+port, nil)
-}
-
-func renderJSON(w http.ResponseWriter, data []byte) {
-	log.Printf("response:\n\t%s\n", string(data))
-
-	w.Header().Set("Content-Type", "application/json; charset=utf-8")
-	w.WriteHeader(http.StatusOK)
-	w.Write(data)
 }
