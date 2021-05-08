@@ -9,4 +9,5 @@ type Repository interface {
 	Delete(id int64) error
 	FindByName(name string) (*models.Item, error)
 	Update(item *models.Item) error
+	UpdateCol(item *models.Item, col string, val interface{}) error
 }

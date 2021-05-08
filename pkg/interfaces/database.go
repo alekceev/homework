@@ -1,9 +1,9 @@
 package interfaces
 
-import "database/sql"
+import "github.com/jmoiron/sqlx"
 
 type DB interface {
 	Open(host string) error
 	Close() error
-	Raw() *sql.DB
+	Raw() *sqlx.DB
 }
