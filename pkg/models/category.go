@@ -40,29 +40,27 @@ func (c *Category) GetParent() *Category {
 
 func (c *Category) GetRoot() *Category {
 	checked := make(map[int]struct{}, 0)
+	x := c
 	for {
-		if _, ok := checked[c.Id]; ok {
-			panic(fmt.Sprintf("Recursion on id: %d", c.Id))
+		if _, ok := checked[x.Id]; ok {
+			panic(fmt.Sprintf("Recursion on id: %d", x.Id))
 		}
-		if c.parent == nil {
-			return c
+		if x.parent == nil {
+			return x
 		}
-		checked[c.Id] = struct{}{}
-		c = c.parent
+		checked[x.Id] = struct{}{}
+		x = x.parent
 	}
 }
 
 func (c *Category) Bredcrumbs() *Categories {
 
 	breadcrumbs := NewCategories()
+
 	if c.parent != nil {
-		for _, cat := range c.parent.Bredcrumbs().Cats {
-			breadcrumbs.Add(cat)
-		}
+		breadcrumbs = c.parent.Bredcrumbs()
 	}
-
 	breadcrumbs.Add(c)
-
 	return breadcrumbs
 }
 

@@ -41,7 +41,7 @@ func main() {
 
 	cat, _ := c.nameToCat["Core I5"]
 
-	fmt.Printf("\n\nItem: %s\nParent: %s(%d)\n", cat.Name, cat.GetParent().Name, cat.GetParent().Id)
 	fmt.Printf("Root: %s\n", cat.GetRoot().Name)
 	fmt.Println("Breadcrumbs: " + strings.Join(cat.Bredcrumbs().Names(), "/"))
+	fmt.Printf("Item: %s\nParent: %s(%d)\n", cat.Name, cat.GetParent().Name, cat.GetParent().Id)
 }
