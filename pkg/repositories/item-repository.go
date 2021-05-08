@@ -103,10 +103,42 @@ func (i *ItemRepository) Update(item *models.Item) error {
 	sql := fmt.Sprintf("update items set %s where id = :id", strings.Join(cols, ","))
 	// log.Println(sql)
 
-	_, err = i.Db.Raw().NamedExec(sql, &item)
+	tx := i.Db.Raw().MustBegin()
+	_, err = tx.NamedExec(sql, &item)
 	if err != nil {
+		tx.Rollback()
 		return err
 	}
+	tx.Commit()
+
+	return nil
+}
+
+func (i *ItemRepository) UpdateCol(item *models.Item, col string, val interface{}) error {
+	found_item, err := i.Get(item.Id)
+	if err != nil || found_item == nil {
+		return fmt.Errorf("not found item %d", item.Id)
+	}
+
+	cols := make(map[string]struct{}, len(item.DbColNames()))
+	for _, s := range item.DbColNames() {
+		cols[s] = struct{}{}
+	}
+
+	if _, ok := cols[col]; !ok {
+		return fmt.Errorf("not found col %s in item", col)
+	}
+
+	sql := fmt.Sprintf("update items set %s = %s + %v where id = :id", col, col, val)
+	// log.Println(sql)
+
+	tx := i.Db.Raw().MustBegin()
+	_, err = tx.NamedExec(sql, &item)
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+	tx.Commit()
 
 	return nil
 }

@@ -4,6 +4,7 @@
   {{range . }}
     <h1>{{ .Name }}</h1>
     <p>{{ .Description }}</p>
+    <p>Amount: {{ .AmountText }}</p>
     <p>${{ .Price }}</p>
   {{end}}
 {{ end }}

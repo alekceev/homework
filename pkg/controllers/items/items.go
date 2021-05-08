@@ -121,12 +121,13 @@ func (h *ItemsController) Get(w http.ResponseWriter, r *http.Request) {
 			renderer.Render(w, `{"error":"Need amount"}`, templates, http.StatusOK)
 			return
 		}
-		item.Amount, err = strconv.ParseInt(amount, 10, 64)
+		amountInt, err := strconv.ParseInt(amount, 10, 64)
 		if err == nil {
-			h.repo.Update(item)
+			item.Amount = item.Amount + amountInt
+			h.repo.UpdateCol(item, "amount", amount)
 		}
 
-		renderer.Render(w, fmt.Sprintf(`{"ok": "success", "amount_text": "%s"}`, item.AmountText()), templates, http.StatusOK)
+		renderer.Render(w, fmt.Sprintf(`{"ok": "success", "amount_text": "%s", "amount": %d}`, item.AmountText(), item.Amount), templates, http.StatusOK)
 
 	default:
 		// Give an error message.
