@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"homework/pkg/interfaces"
 	"homework/pkg/models"
+	"strings"
 )
 
 type ItemRepository struct {
@@ -36,7 +37,7 @@ func (i *ItemRepository) GetAll() (models.Items, error) {
 
 func (i *ItemRepository) Get(id int64) (*models.Item, error) {
 	item := &models.Item{}
-	err := i.Db.Raw().Get(&item, "select * from items where id = ?", id)
+	err := i.Db.Raw().Get(item, "select * from items where id = ?", id)
 	if err != nil {
 		return item, err
 	}
@@ -49,7 +50,10 @@ func (i *ItemRepository) Save(item *models.Item) error {
 		salePrice = item.Price
 	}
 
-	res, err := i.Db.Raw().NamedExec("insert into items(name, description, number, category, price) values (:name, :desctiption, :number, :category, :price)", &item)
+	sql := fmt.Sprintf("insert into items(%s) values (%s)", strings.Join(item.DbColNames(), ","), ":"+strings.Join(item.DbColNames(), ",:"))
+	// log.Println(sql)
+
+	res, err := i.Db.Raw().NamedExec(sql, &item)
 	if err != nil {
 		return err
 	}
@@ -74,7 +78,7 @@ func (i *ItemRepository) Delete(id int64) error {
 
 func (i *ItemRepository) FindByName(name string) (*models.Item, error) {
 	item := &models.Item{}
-	err := i.Db.Raw().Get(&item, "select * from items where name = ?", name)
+	err := i.Db.Raw().Get(item, "select * from items where name = ?", name)
 	if err != nil {
 		return item, err
 	}
@@ -92,8 +96,14 @@ func (i *ItemRepository) Update(item *models.Item) error {
 		salePrice = item.Price
 	}
 
-	_, err = i.Db.Raw().NamedExec("update items set name = :name, description = :description, number = :number, category = :category, price = :price, sale_price = :sale_price where id = :id",
-		&item)
+	cols := make([]string, 0)
+	for _, s := range item.DbColNames() {
+		cols = append(cols, fmt.Sprintf("%s = :%s", s, s))
+	}
+	sql := fmt.Sprintf("update items set %s where id = :id", strings.Join(cols, ","))
+	// log.Println(sql)
+
+	_, err = i.Db.Raw().NamedExec(sql, &item)
 	if err != nil {
 		return err
 	}

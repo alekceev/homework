@@ -1,5 +1,9 @@
 package models
 
+import (
+	"reflect"
+)
+
 type Item struct {
 	Id          int64   `json:"id" db:"id"`
 	Name        string  `json:"name" db:"name"`
@@ -22,4 +26,23 @@ func (i *Item) AmountText() string {
 	default:
 		return "Мало"
 	}
+}
+
+func (item *Item) DbColNames() []string {
+
+	colNames := make([]string, 0)
+	val := reflect.Indirect(reflect.ValueOf(item))
+
+	for i := 0; i < val.Type().NumField(); i++ {
+
+		col := val.Type().Field(i).Tag.Get("db")
+
+		// without primary key
+		if col == "id" {
+			continue
+		}
+
+		colNames = append(colNames, col)
+	}
+	return colNames
 }

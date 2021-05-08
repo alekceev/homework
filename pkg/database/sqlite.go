@@ -47,7 +47,8 @@ CREATE TABLE IF NOT EXISTS items (
 	number      VARCHAR(255) COLLATE NOCASE NOT NULL,
 	category    VARCHAR(255) COLLATE NOCASE NOT NULL,
 	price       NUMERIC CHECK (price > 0) NOT NULL,
-	sale_price  NUMERIC CHECK (price > 0) NOT NULL
+	sale_price  NUMERIC CHECK (price > 0) NOT NULL,
+	amount      NUMERIC NOT NULL
 );
 `
 }
