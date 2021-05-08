@@ -1,13 +1,12 @@
 package database
 
 import (
-	"database/sql"
-
+	"github.com/jmoiron/sqlx"
 	_ "github.com/mattn/go-sqlite3"
 )
 
 type DB struct {
-	db *sql.DB
+	db *sqlx.DB
 }
 
 func Connect(host string) (*DB, error) {
@@ -21,7 +20,7 @@ func Connect(host string) (*DB, error) {
 }
 
 func (d *DB) Open(host string) error {
-	sqlite, err := sql.Open("sqlite3", host)
+	sqlite, err := sqlx.Open("sqlite3", host)
 	if err != nil {
 		return err
 	}
@@ -35,7 +34,7 @@ func (d *DB) Close() error {
 	return d.db.Close()
 }
 
-func (d *DB) Raw() *sql.DB {
+func (d *DB) Raw() *sqlx.DB {
 	return d.db
 }
 

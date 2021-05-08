@@ -24,31 +24,19 @@ func NewItemRepository(db interfaces.DB) *ItemRepository {
 }
 
 func (i *ItemRepository) GetAll() (models.Items, error) {
-	rows, err := i.Db.Raw().Query("select * from items")
-	if err != nil {
-		return nil, err
-	}
-
 	items := models.Items{}
 
-	for rows.Next() {
-		i := &models.Item{}
-		err := rows.Scan(&i.Id, &i.Name, &i.Description, &i.Number, &i.Category, &i.Price, &i.SalePrice)
-
-		if err != nil {
-			fmt.Println(err)
-			continue
-		}
-		items = append(items, i)
+	err := i.Db.Raw().Select(&items, "select * from items")
+	if err != nil {
+		return nil, err
 	}
 
 	return items, nil
 }
 
 func (i *ItemRepository) Get(id int64) (*models.Item, error) {
-	row := i.Db.Raw().QueryRow("select * from items where id = ?", id)
 	item := &models.Item{}
-	err := row.Scan(&item.Id, &item.Name, &item.Description, &item.Number, &item.Category, &item.Price, &item.SalePrice)
+	err := i.Db.Raw().Get(&item, "select * from items where id = ?", id)
 	if err != nil {
 		return item, err
 	}
@@ -60,8 +48,8 @@ func (i *ItemRepository) Save(item *models.Item) error {
 	if salePrice <= 0 {
 		salePrice = item.Price
 	}
-	res, err := i.Db.Raw().Exec("insert into items(name, description, number, category, price, sale_price) values (?, ?, ?, ?, ?, ?)",
-		item.Name, item.Description, item.Number, item.Category, item.Price, salePrice)
+
+	res, err := i.Db.Raw().NamedExec("insert into items(name, description, number, category, price) values (:name, :desctiption, :number, :category, :price)", &item)
 	if err != nil {
 		return err
 	}
@@ -85,13 +73,12 @@ func (i *ItemRepository) Delete(id int64) error {
 }
 
 func (i *ItemRepository) FindByName(name string) (*models.Item, error) {
-	row := i.Db.Raw().QueryRow("select * from items where name = ?", name)
-	found_item := &models.Item{}
-	err := row.Scan(&found_item.Id, &found_item.Name, &found_item.Description, &found_item.Number, &found_item.Category, &found_item.Price, &found_item.SalePrice)
+	item := &models.Item{}
+	err := i.Db.Raw().Get(&item, "select * from items where name = ?", name)
 	if err != nil {
-		return found_item, err
+		return item, err
 	}
-	return found_item, nil
+	return item, nil
 }
 
 func (i *ItemRepository) Update(item *models.Item) error {
@@ -105,8 +92,8 @@ func (i *ItemRepository) Update(item *models.Item) error {
 		salePrice = item.Price
 	}
 
-	_, err = i.Db.Raw().Exec("update items set name = ?, description = ?, number = ?, category = ?, price = ?, sale_price = ? where id = ?",
-		item.Name, item.Description, item.Number, item.Category, item.Price, salePrice, item.Id)
+	_, err = i.Db.Raw().NamedExec("update items set name = :name, description = :description, number = :number, category = :category, price = :price, sale_price = :sale_price where id = :id",
+		&item)
 	if err != nil {
 		return err
 	}
