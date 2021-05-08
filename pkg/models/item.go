@@ -8,6 +8,18 @@ type Item struct {
 	Description string  `json:"description" db:"description"`
 	Price       float64 `json:"price" db:"price"`
 	SalePrice   float64 `json:"sale_price" db:"sale_price"`
+	Amount      int64   `json:"amount" db:"amount"`
 }
 
 type Items []*Item
+
+func (i *Item) AmountText() string {
+	switch {
+	case i.Amount <= 0:
+		return "Нет в наличии"
+	case i.Amount > 10:
+		return "Много"
+	default:
+		return "Мало"
+	}
+}

@@ -2,6 +2,7 @@ package items
 
 import (
 	"encoding/json"
+	"fmt"
 	"homework/pkg/controllers/routes"
 	"homework/pkg/interfaces"
 	"homework/pkg/models"
@@ -105,6 +106,28 @@ func (h *ItemsController) Get(w http.ResponseWriter, r *http.Request) {
 		}
 		renderer.Render(w, `{"ok": "success"}`, templates, http.StatusOK)
 
+	case http.MethodPatch:
+		// Update item
+		item, err := h.repo.Get(id)
+		if err != nil {
+			log.Printf("Error get item: %d %v", id, err)
+			renderer.Render(w, `{"error":"Not found"}`, templates, http.StatusOK)
+			return
+		}
+
+		params := r.URL.Query()
+		amount := params.Get("amount")
+		if amount == "" {
+			renderer.Render(w, `{"error":"Need amount"}`, templates, http.StatusOK)
+			return
+		}
+		item.Amount, err = strconv.ParseInt(amount, 10, 64)
+		if err == nil {
+			h.repo.Update(item)
+		}
+
+		renderer.Render(w, fmt.Sprintf(`{"ok": "success", "amount_text": "%s"}`, item.AmountText()), templates, http.StatusOK)
+
 	default:
 		// Give an error message.
 		renderer.Render(w, []byte(`{"error": "Not found"}`), templates, http.StatusOK)
@@ -114,6 +137,6 @@ func (h *ItemsController) Get(w http.ResponseWriter, r *http.Request) {
 func (h *ItemsController) Routes() []routes.Route {
 	return []routes.Route{
 		{Route: "/items", Handler: h.GetAll, Methods: []string{http.MethodGet, http.MethodPost}},
-		{Route: "/items/{id:[0-9]+}", Handler: h.Get, Methods: []string{http.MethodGet, http.MethodDelete}},
+		{Route: "/items/{id:[0-9]+}", Handler: h.Get, Methods: []string{http.MethodGet, http.MethodDelete, http.MethodPatch}},
 	}
 }
